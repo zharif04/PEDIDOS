@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Pedidos</title>
+    <link rel="icon" href="CUAJADAS.ico" type="image/x-icon">
+    <a href="URL">https://127.0.0.1:5500/cuajadas/index.html</a>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF; /* Color del encabezado */
+            color: white; /* Color del texto del encabezado */
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9; /* Color de filas alternas */
+        }
+        tr:hover {
+            background-color: #f1f1f1; /* Color al pasar el mouse */
+        }
+        input[type="number"],
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        input[readonly] {
+            background-color: #e9ecef; /* Color de fondo para campos de solo lectura */
+        }
+    </style>
+</head>
+<body>
+
+<h1> Pedidos zharif</h1>
+
+<table id="pedidoTable">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Productos</th>
+            <th>Cantidad</th>
+            <th>Precio Mío (COP)</th>
+            <th>Subtotal Mío (COP)</th>
+            <th>Precio Sergio (COP)</th>
+            <th>Subtotal Sergio (COP)</th>
+        </tr>
+    </thead>
+    <tbody id="pedidoBody">
+        <tr>
+            <td><input type="date" value="2024-03-08"></td>
+            <td><input type="text" id="product0"></td>
+            <td><input type="number" id="quantity0" value="1" onchange="calculateSubtotal(0)"></td>
+            <td><input type="number" id="priceMio0" value="0" onchange="calculateSubtotal(0)"></td>
+            <td><input type="number" id="mySubtotal0" value="0" readonly></td>
+            <td><input type="number" id="priceSergio0" value="0" onchange="calculateSubtotal(0)"></td>
+            <td><input type="number" id="sergioSubtotal0" value="0" readonly></td>
+        </tr>
+    </tbody>
+</table>
+
+
+<button onclick="registerOrder()"> Historial</button>
+
+
+
+<h2>Historial
+</h2>
+<table id="historialTable">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Productos</th>
+            <th>Total Mío (COP)</th>
+            <th>Total Sergio (COP)</th>
+            <th>Acciones</th> <!-- Columna para acciones -->
+        </tr>
+    </thead>
+    <tbody id="historialBody"></tbody>
+</table>
+
+<script>
+// Función para calcular subtotal y total
+function calculateSubtotal(index) {
+    const quantity = parseFloat(document.getElementById(`quantity${index}`).value) || 0;
+    const priceMio = parseFloat(document.getElementById(`priceMio${index}`).value) || 0;
+    const priceSergio = parseFloat(document.getElementById(`priceSergio${index}`).value) || 0;
+
+    const mySubtotal = quantity * priceMio; // Cálculo para Mío
+    const sergioSubtotal = quantity * priceSergio; // Cálculo para Sergio
+
+    document.getElementById(`mySubtotal${index}`).value = mySubtotal.toFixed(2);
+    document.getElementById(`sergioSubtotal${index}`).value = sergioSubtotal.toFixed(2);
+    
+    updateTotals();
+}
+
+// Función para actualizar totales generales
+function updateTotals() {
+    let grandTotal = 0;
+
+    const rows = document.querySelectorAll('#pedidoBody tr');
+    rows.forEach(row => {
+        const myTotal = parseFloat(row.querySelector('input[id^=mySubtotal]').value) || 0;
+        const sergioTotal = parseFloat(row.querySelector('input[id^=sergioSubtotal]').value) || 0;
+
+        grandTotal += myTotal + sergioTotal; // Sumar totales
+    });
+
+    document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
+}
+
+// Función para agregar una nueva fila
+function addRow() {
+    const index = document.querySelectorAll('#pedidoBody tr').length; // Obtener el índice basado en la cantidad de filas
+
+    const newRow = `
+        <tr>
+            <td><input type="date"></td>
+            <td><input type="text" id="product${index}"></td>
+            <td><input type="number" id="quantity${index}" value="1" onchange="calculateSubtotal(${index})"></td>
+            <td><input type="number" id="priceMio${index}" value="0" onchange="calculateSubtotal(${index})"></td>
+            <td><input type="number" id="mySubtotal${index}" value="0" readonly></td>
+            <td><input type="number" id="priceSergio${index}" value="0" onchange="calculateSubtotal(${index})"></td>
+            <td><input type="number" id="sergioSubtotal${index}" value="0" readonly></td>
+        </tr>`;
+    
+    document.getElementById('pedidoBody').insertAdjacentHTML('beforeend', newRow);
+}
+
+// Función para registrar el pedido en el historial
+function registerOrder() {
+    const rows = document.querySelectorAll('#pedidoBody tr');
+    
+    // Limpiar el historial antes de agregar nuevos registros
+    document.getElementById('historialBody').innerHTML = '';
+
+    rows.forEach(row => {
+        const fecha = row.querySelector('input[type=date]').value;
+        const producto = row.querySelector('input[type=text]').value;
+
+        // Calcular totales
+        const myTotal = row.querySelector('input[id^=mySubtotal]').value;
+        const sergioTotal = row.querySelector('input[id^=sergioSubtotal]').value;
+
+        if (fecha && producto && myTotal && sergioTotal) { // Solo registrar si hay datos válidos
+           const historialRow = `
+                <tr>
+                    <td>${fecha}</td>
+                    <td>${producto}</td>
+                    <td>${parseFloat(myTotal).toFixed(2)}</td> <!-- Total Mío -->
+                    <td>${parseFloat(sergioTotal).toFixed(2)}</td> <!-- Total Sergio -->
+                    <td><button onclick='editOrder(this)'>Editar</button> 
+                        <button onclick='deleteOrder(this)'>Eliminar</button></td> <!-- Botón Editar y Eliminar -->
+                </tr>`;
+            
+           document.getElementById('historialBody').insertAdjacentHTML('beforeend', historialRow);
+       }
+   });
+}
+
+// Función para editar un pedido desde el historial
+function editOrder(button) {
+    const row = button.parentNode.parentNode; // Obtener la fila correspondiente
+    const fecha = row.cells[0].innerText;
+    const producto = row.cells[1].innerText;
+    
+    // Cargar los datos en la tabla de pedidos
+    addRow(); // Agregar una nueva fila vacía
+    const newIndex = document.querySelectorAll('#pedidoBody tr').length - 1; // Obtener el índice de la nueva fila
+
+    document.querySelector(`#pedidoBody tr:last-child input[type=date]`).value = fecha;
+    document.querySelector(`#pedidoBody tr:last-child input[type=text]`).value = producto;
+
+    // Asumir que los precios son iguales a los totales divididos por la cantidad (ajustar según sea necesario)
+}
+
+// Función para eliminar un pedido del historial
+function deleteOrder(button) {
+   const row = button.parentNode.parentNode; // Obtener la fila correspondiente
+   row.parentNode.removeChild(row); // Eliminar la fila del historial
+}
+</script>
+
+</body>
+</html>
